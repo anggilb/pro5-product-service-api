@@ -1,0 +1,33 @@
+server:
+  port: 8088
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/proyecto5
+    username: postgres
+    password: 1234
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate.transaction.jta.platform: org.hibernate.engine.transaction.jta.platform.internal.NoJtaPlatform
+  logging:
+    level:
+      org:
+        hibernate:
+          SQL: DEBUG
+  hikaricp:
+    poolName: HikariPool-1
+    maximum-pool-size: 10
+    minimum-idle: 5
+    idle-timeout: 30000
+    max-lifetime: 1800000
+    connection-timeout: 20000
+stripe:
+  secret:
+    key: sk_test_51ACC87GbPHGIkpS5FpxwD5rajQV6dWlIlu05mh6Vv2fmoEXhuwVcGTfbS3xkl96CMNWEm6ADefhJtd7344ydoG8p00GL7fJcKG
+    endpoint: whsec_33fcb7806453a09adb1d85c966c9fe299c68b845374fc1f4c787165651ba4a3c
+  products:
+    starter: prod_RzaN037MyPD5Or
+    all-in: prod_RzaNr65k1TnrE4
+jwt:
+  secret: ndsnfsdlfsadionfoisancneoruhfveipnerihfg98herivneru0vb9ernperf8rf93ef9ce9fcbe9wcqenosncosdannfn3ef3fnu23fd23nfd23
