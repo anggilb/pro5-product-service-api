@@ -2,6 +2,10 @@ package com.example.product_service_api.services;
 
 import com.example.product_service_api.commons.dtos.CheckoutRequest;
 import com.example.product_service_api.commons.dtos.CheckoutResponse;
+import com.example.product_service_api.commons.dtos.PlanChangeRequest;
+import com.example.product_service_api.commons.dtos.PlanChangeResponse;
+import com.example.product_service_api.commons.dtos.UnsubscribeRequest;
+import com.example.product_service_api.commons.dtos.UnsubscribeResponse;
 import com.example.product_service_api.commons.exceptions.BadRequestException;
 import com.example.product_service_api.commons.properties.StripeProperties;
 import com.stripe.exception.StripeException;
@@ -74,6 +78,39 @@ public class StripeService {
         return session.setMode(SessionCreateParams.Mode.SUBSCRIPTION);
     }
 
+    private SessionCreateParams.Builder getSessionCreateParamsPlanChange(PlanChangeRequest planChangeRequest) {
+        var price = Optional.ofNullable(getPriceFromAProduct(planChangeRequest.getProductId()))
+                .orElseThrow(() -> new BadRequestException("Price not found with product id: " + planChangeRequest.getProductId()));
+        var session = SessionCreateParams.builder()
+                .setCustomer(planChangeRequest.getCustomerId())
+                .setSuccessUrl("http://localhost:8088/success")
+                .setCancelUrl("http://localhost:8088/cancel")
+                .addLineItem(SessionCreateParams.LineItem.builder()
+                           .setPrice(price.getId())
+                            .setQuantity(1L)
+                            .build()
+                )
+                .putExtraParam("metadata", extraMetadata(planChangeRequest.getProductId()));
+
+        return session.setMode(SessionCreateParams.Mode.SUBSCRIPTION);
+    }
+
+    private SessionCreateParams.Builder getSessionCreateParamsUnsubscribe(UnsubscribeRequest unsubscribeRequest) {
+        var price = Optional.ofNullable(getPriceFromAProduct(unsubscribeRequest.getProductId()))
+                .orElseThrow(() -> new BadRequestException("Price not found with product id: " + unsubscribeRequest.getProductId()));
+        var session = SessionCreateParams.builder()
+                .setCustomer(unsubscribeRequest.getCustomerId())
+                .setSuccessUrl("http://localhost:8088/success")
+                .setCancelUrl("http://localhost:8088/cancel")
+                .addLineItem(SessionCreateParams.LineItem.builder()
+                        .setPrice(price.getId())
+                        .setQuantity(1L)
+                        .build()
+                );
+
+        return session.setMode(SessionCreateParams.Mode.SUBSCRIPTION);
+    }
+
     private Map<String, Object> extraMetadata(String productId) {
         return Map.of(
            "product_id", productId
@@ -109,6 +146,38 @@ public class StripeService {
             return Coupon.create(couponParams);
         } catch (StripeException e) {
             throw new RuntimeException("Failed to create discount coupon", e);
+        }
+    }
+
+    public PlanChangeResponse createChangePlan(PlanChangeRequest planChangeRequest) {
+        var session = getSessionCreateParamsPlanChange(planChangeRequest).build();
+
+        try {
+            return Optional.of(Session.create(session))
+                    .map(sessionCreated ->
+                            PlanChangeResponse.builder()
+                                    .paymentUrl(sessionCreated.getUrl())
+                                    .build()
+                    )
+                    .orElseThrow(() -> new RuntimeException("Error couldn't create change plan."));
+        } catch (StripeException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public UnsubscribeResponse createUnsubscribe(UnsubscribeRequest unsubscribeRequest) {
+        var session = getSessionCreateParamsUnsubscribe(unsubscribeRequest).build();
+
+        try {
+            return Optional.of(Session.create(session))
+                    .map(sessionCreated ->
+                            UnsubscribeResponse.builder()
+                                    .paymentUrl(sessionCreated.getUrl())
+                                    .build()
+                    )
+                    .orElseThrow(() -> new RuntimeException("Error couldn't create unsubscribe"));
+        } catch (StripeException e) {
+            throw new RuntimeException(e);
         }
     }
 }

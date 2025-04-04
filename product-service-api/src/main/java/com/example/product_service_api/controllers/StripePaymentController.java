@@ -28,4 +28,27 @@ public class StripePaymentController {
 
         return ResponseEntity.ok(stripePaymentService.createCheckout(productPlan, userId));
     }
+
+    @PostMapping("/change-plan")
+    public ResponseEntity<String> createChangePlan(@RequestParam ProductPlanEnum productPlan,
+                                                 @RequestAttribute("X-User-Id") Long userId,
+                                                 @RequestAttribute("X-User-Role") UserRoleEnum userRole){
+
+        if (!USER.equals(userRole)) {
+            return ResponseEntity.status(401).build();
+        }
+
+        return ResponseEntity.ok(stripePaymentService.createChangePlan(productPlan, userId));
+    }
+
+    @PostMapping("/unsubscribe")
+    public ResponseEntity<String> createUnsubscribe(@RequestAttribute("X-User-Id") Long userId,
+                                                 @RequestAttribute("X-User-Role") UserRoleEnum userRole){
+
+        if (!USER.equals(userRole)) {
+            return ResponseEntity.status(401).build();
+        }
+
+        return ResponseEntity.ok(stripePaymentService.createUnsubscribe(userId));
+    }
 }
